@@ -31,10 +31,18 @@
     <LinearLayout
         android:id="@+id/status_panel"
         android:layout_width="match_parent"
+        android:background="@drawable/brand_background"
         android:layout_height="match_parent"
         android:gravity="center"
         android:orientation="vertical"
         android:padding="48dp">
+
+        <ImageView
+            android:layout_width="160dp"
+            android:layout_height="160dp"
+            android:layout_marginBottom="32dp"
+            android:contentDescription="@string/app_name"
+            android:src="@mipmap/ic_launcher" />
 
         <TextView
             android:id="@+id/status_text"

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- HPCC maroon, matching the logo -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <gradient
+        android:centerColor="#4A0010"
+        android:endColor="#1E0006"
+        android:gradientRadius="1200dp"
+        android:startColor="#6E0818"
+        android:type="radial" />
+</shape>
