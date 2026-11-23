@@ -211,7 +211,7 @@ class PlayerActivity : Activity() {
         val live = if (StreamUrl.isRtsp(currentUrl)) {
             if (playStartWallMs >= 0) {
                 val lost = (SystemClock.elapsedRealtime() - playStartWallMs) - (p.currentPosition - playStartPositionMs)
-                "lost since start: ${lost} ms"
+                "fell behind: ${lost.coerceAtLeast(0)} ms"
             } else "-"
         } else {
             val off = p.currentLiveOffset
@@ -323,6 +323,12 @@ class PlayerActivity : Activity() {
         if (StreamUrl.isRtsp(currentUrl)) {
             if (playStartWallMs < 0) return false
             val drift = (now - playStartWallMs) - (p.currentPosition - playStartPositionMs)
+            if (drift < 0) {
+                // We started behind live and caught up (played faster); measure from here.
+                playStartWallMs = now
+                playStartPositionMs = p.currentPosition
+                return false
+            }
             if (drift > MAX_DRIFT_MS) {
                 Log.i(TAG, "RTSP fell ${drift}ms behind live, reconnecting")
                 return true
@@ -484,8 +490,8 @@ class PlayerActivity : Activity() {
         private const val MAX_HLS_LIVE_OFFSET_MS = 8000L
         private const val HLS_TARGET_OFFSET_MS = 1000L
         private const val CATCHUP_INTERVAL_MS = 500L
-        private const val CATCHUP_START_MS = 450L
-        private const val CATCHUP_STOP_MS = 250L
+        private const val CATCHUP_START_MS = 350L
+        private const val CATCHUP_STOP_MS = 150L
         private const val CATCHUP_SPEED = 1.1f
         private const val HLS_MIN_OFFSET_MS = 500L
         private const val HLS_MIN_SPEED = 0.97f

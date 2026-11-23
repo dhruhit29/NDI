@@ -16,8 +16,8 @@ android {
         // Fire OS 6 (Android 7.1) and newer. Media3 needs API 23+.
         minSdk = 23
         targetSdk = 34
-        versionCode = 7
-        versionName = "1.0.6"
+        versionCode = 8
+        versionName = "1.0.7"
     }
 
     signingConfigs {
