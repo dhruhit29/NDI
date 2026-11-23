@@ -46,6 +46,13 @@ class PlayerActivity : Activity() {
     private var lastBackPressAt = 0L
     private var openedSettingsForMissingUrl = false
 
+    // RTSP -> HLS fallback. Some TVs / streams fail over RTSP; MediaMTX serves the
+    // same feed as HLS too (a little more delay, but very robust).
+    private var useHlsFallback = false
+    private var failuresInCurrentMode = 0
+    private var reachedReady = false
+    private var currentUrl = ""
+
     // Freeze / delay detection.
     private var lastPositionMs = -1L
     private var lastProgressAt = 0L
@@ -67,7 +74,7 @@ class PlayerActivity : Activity() {
         super.onNewIntent(intent)
         setIntent(intent)
         if (applyUrlFromIntent(intent) && player != null) {
-            retryDelayMs = RETRY_MIN_MS
+            resetMode()
             startPlayback()
         }
     }
@@ -84,7 +91,7 @@ class PlayerActivity : Activity() {
             }
             return
         }
-        retryDelayMs = RETRY_MIN_MS
+        resetMode()
         startPlayback()
     }
 
@@ -114,7 +121,10 @@ class PlayerActivity : Activity() {
         handler.removeCallbacksAndMessages(null)
         releasePlayer()
 
-        val url = prefs.streamUrl
+        val configured = prefs.streamUrl
+        val url = if (useHlsFallback) StreamUrl.hlsFallbackFor(configured) ?: configured else configured
+        currentUrl = url
+        reachedReady = false
         if (url.isBlank()) {
             showStatus(getString(R.string.status_no_url))
             return
@@ -152,13 +162,8 @@ class PlayerActivity : Activity() {
     }
 
     private fun buildMediaSource(url: String): MediaSource {
-        val item = MediaItem.Builder()
-            .setUri(url)
-            .setLiveConfiguration(
-                MediaItem.LiveConfiguration.Builder().setTargetOffsetMs(LIVE_TARGET_OFFSET_MS).build()
-            )
-            .build()
-        return if (url.startsWith("rtsp://", ignoreCase = true) || url.startsWith("rtsps://", ignoreCase = true)) {
+        val item = MediaItem.fromUri(url)
+        return if (StreamUrl.isRtsp(url)) {
             RtspMediaSource.Factory()
                 // RTP over the RTSP TCP connection: no lost packets / smearing,
                 // and only one port (8554) has to be open on the program PC.
@@ -177,6 +182,9 @@ class PlayerActivity : Activity() {
                 Player.STATE_READY -> {
                     hideStatus()
                     retryDelayMs = RETRY_MIN_MS
+                    reachedReady = true
+                    failuresInCurrentMode = 0
+                    Log.i(TAG, "Playing $currentUrl")
                 }
                 Player.STATE_ENDED -> scheduleReconnect(getString(R.string.reason_ended))
                 else -> Unit
@@ -191,8 +199,8 @@ class PlayerActivity : Activity() {
         }
 
         override fun onPlayerError(error: PlaybackException) {
-            Log.w(TAG, "Playback error", error)
-            scheduleReconnect(error.errorCodeName)
+            Log.w(TAG, "Playback error on $currentUrl", error)
+            scheduleReconnect(describe(error))
         }
     }
 
@@ -231,9 +239,42 @@ class PlayerActivity : Activity() {
     private fun scheduleReconnect(reason: String) {
         handler.removeCallbacksAndMessages(null)
         releasePlayer()
-        showStatus(getString(R.string.status_reconnecting, reason, retryDelayMs / 1000))
+        if (!reachedReady) {
+            failuresInCurrentMode++
+            // Switch between RTSP and HLS after repeated failures to start.
+            if (failuresInCurrentMode >= FAILURES_BEFORE_SWITCH &&
+                StreamUrl.hlsFallbackFor(prefs.streamUrl) != null
+            ) {
+                useHlsFallback = !useHlsFallback
+                failuresInCurrentMode = 0
+                retryDelayMs = RETRY_MIN_MS
+                Log.i(TAG, "Switching to ${if (useHlsFallback) "HLS" else "RTSP"}")
+            }
+        }
+        showStatus(getString(R.string.status_reconnecting, currentUrl, reason, retryDelayMs / 1000))
         handler.postDelayed({ startPlayback() }, retryDelayMs)
         retryDelayMs = (retryDelayMs * 2).coerceAtMost(RETRY_MAX_MS)
+    }
+
+    private fun resetMode() {
+        retryDelayMs = RETRY_MIN_MS
+        useHlsFallback = false
+        failuresInCurrentMode = 0
+    }
+
+    /** Error code plus the underlying reasons, so a volunteer can read it out. */
+    private fun describe(error: PlaybackException): String {
+        val parts = mutableListOf(error.errorCodeName)
+        var cause: Throwable? = error.cause
+        var depth = 0
+        while (cause != null && depth < 4) {
+            val msg = cause.message?.takeIf { it.isNotBlank() }
+            val text = if (msg != null) "${cause.javaClass.simpleName}: $msg" else cause.javaClass.simpleName
+            if (parts.none { it.contains(text) }) parts.add(text)
+            cause = cause.cause
+            depth++
+        }
+        return parts.joinToString("\n").take(MAX_ERROR_CHARS)
     }
 
     private fun releasePlayer() {
@@ -299,7 +340,8 @@ class PlayerActivity : Activity() {
         private const val MAX_BUFFER_MS = 3000
         private const val START_BUFFER_MS = 250
         private const val REBUFFER_MS = 500
-        private const val LIVE_TARGET_OFFSET_MS = 1500L
+        private const val FAILURES_BEFORE_SWITCH = 2
+        private const val MAX_ERROR_CHARS = 400
         private const val RTSP_TIMEOUT_MS = 8000L
 
         private const val RETRY_MIN_MS = 2000L
