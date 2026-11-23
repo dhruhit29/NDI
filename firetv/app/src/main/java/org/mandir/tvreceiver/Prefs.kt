@@ -37,12 +37,17 @@ class Prefs(context: Context) {
         get() = sp.getString(KEY_LAST_RTSP_ERROR, "") ?: ""
         set(value) = sp.edit().putString(KEY_LAST_RTSP_ERROR, value).apply()
 
+    var lastVersionCode: Int
+        get() = sp.getInt(KEY_LAST_VERSION, 0)
+        set(value) = sp.edit().putInt(KEY_LAST_VERSION, value).apply()
+
     private companion object {
         const val KEY_URL = "stream_url"
         const val KEY_BOOT = "start_on_boot"
         const val KEY_WAKE = "reopen_on_wake"
         const val KEY_PREFER_HLS = "prefer_hls"
         const val KEY_LAST_MODE = "last_mode"
+        const val KEY_LAST_VERSION = "last_version_code"
         const val KEY_LAST_RTSP_ERROR = "last_rtsp_error"
     }
 }

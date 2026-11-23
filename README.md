@@ -209,6 +209,9 @@ If a TV already has a PC attached, use `windows/play-on-windows-tv.bat`:
   H.265 RTSP packets that MediaMTX sends.
 - Build locally: `cd firetv && ./gradlew assembleRelease`. This needs the
   Android SDK (API 36) and JDK 17.
+- MediaMTX sends a blank SDP session name (`s= `) that Media3's parser rejects
+  ("Malformed SDP line"). `RtspSdpFixProxy.kt` is a small loopback relay in the
+  app that rewrites it to `s=-` and otherwise passes RTSP through untouched.
 - Besides `rtsp://`, the app also accepts HLS (`http://.../index.m3u8`) and
   MPEG-TS over UDP (`udp://239.x.x.x:port`) addresses.
 - Set the address from a PC:

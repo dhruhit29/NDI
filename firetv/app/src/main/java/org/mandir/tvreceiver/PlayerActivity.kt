@@ -2,6 +2,7 @@ package org.mandir.tvreceiver
 
 import android.app.Activity
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -53,6 +54,7 @@ class PlayerActivity : Activity() {
     private var failuresInCurrentMode = 0
     private var reachedReady = false
     private var currentUrl = ""
+    private var rtspProxy: RtspSdpFixProxy? = null
 
     // Freeze / delay detection.
     private var lastPositionMs = -1L
@@ -69,6 +71,18 @@ class PlayerActivity : Activity() {
         statusPanel = findViewById(R.id.status_panel)
         statusText = findViewById(R.id.status_text)
         applyUrlFromIntent(intent)
+        val version = currentVersionCode()
+        if (prefs.lastVersionCode != version) {
+            prefs.lastVersionCode = version
+            prefs.preferHls = false // give RTSP a fresh try after every app update
+        }
+    }
+
+    @Suppress("DEPRECATION")
+    private fun currentVersionCode(): Int = try {
+        packageManager.getPackageInfo(packageName, 0).versionCode
+    } catch (e: Exception) {
+        0
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -164,7 +178,7 @@ class PlayerActivity : Activity() {
 
     private fun buildMediaSource(url: String): MediaSource {
         val item = if (StreamUrl.isRtsp(url)) {
-            MediaItem.fromUri(url)
+            MediaItem.fromUri(viaSdpFixProxy(url))
         } else {
             // Stay close to live on HLS. The relay suggests a safer (larger) offset;
             // if this TV rebuffers, ExoPlayer raises the target a little on its own.
@@ -319,11 +333,34 @@ class PlayerActivity : Activity() {
         return parts.joinToString("\n").take(MAX_ERROR_CHARS)
     }
 
+    /**
+     * Routes plain rtsp:// through [RtspSdpFixProxy] so MediaMTX's blank session name
+     * doesn't make the player reject the stream. Falls back to the direct address on error.
+     */
+    private fun viaSdpFixProxy(url: String): String {
+        if (!url.startsWith("rtsp://", ignoreCase = true)) return url
+        return try {
+            val uri = Uri.parse(url)
+            val host = uri.host ?: return url
+            val port = if (uri.port > 0) uri.port else DEFAULT_RTSP_PORT
+            val proxy = RtspSdpFixProxy(host, port).start()
+            rtspProxy = proxy
+            val userInfo = uri.encodedUserInfo?.let { "$it@" } ?: ""
+            val query = uri.encodedQuery?.let { "?$it" } ?: ""
+            "rtsp://${userInfo}127.0.0.1:${proxy.localPort}${uri.encodedPath ?: ""}$query"
+        } catch (e: Exception) {
+            Log.w(TAG, "Could not start RTSP relay, connecting directly", e)
+            url
+        }
+    }
+
     private fun releasePlayer() {
         player?.let {
             it.removeListener(listener)
             it.release()
         }
+        rtspProxy?.close()
+        rtspProxy = null
         player = null
         playerView.player = null
     }
@@ -383,6 +420,7 @@ class PlayerActivity : Activity() {
         private const val START_BUFFER_MS = 250
         private const val REBUFFER_MS = 500
         private const val FAILURES_BEFORE_SWITCH = 2
+        private const val DEFAULT_RTSP_PORT = 554
         private const val MAX_ERROR_CHARS = 400
         private const val RTSP_TIMEOUT_MS = 8000L
 
