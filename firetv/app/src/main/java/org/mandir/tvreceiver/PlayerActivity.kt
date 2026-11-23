@@ -41,6 +41,8 @@ class PlayerActivity : Activity() {
     private lateinit var playerView: PlayerView
     private lateinit var statusPanel: View
     private lateinit var statusText: TextView
+    private lateinit var statsText: TextView
+    private var statsVisible = false
     private val handler = Handler(Looper.getMainLooper())
 
     private var player: ExoPlayer? = null
@@ -70,6 +72,7 @@ class PlayerActivity : Activity() {
         playerView = findViewById(R.id.player_view)
         statusPanel = findViewById(R.id.status_panel)
         statusText = findViewById(R.id.status_text)
+        statsText = findViewById(R.id.stats_text)
         applyUrlFromIntent(intent)
         val version = currentVersionCode()
         if (prefs.lastVersionCode != version) {
@@ -174,6 +177,47 @@ class PlayerActivity : Activity() {
         lastProgressAt = SystemClock.elapsedRealtime()
         playStartWallMs = -1L
         handler.postDelayed(watchdog, WATCHDOG_INTERVAL_MS)
+        handler.postDelayed(catchUp, CATCHUP_INTERVAL_MS)
+    }
+
+    /**
+     * Keeps RTSP close to live. Whatever sits in the buffer is extra delay; after a network
+     * hiccup it grows, so play slightly faster (pitch is kept) until it is small again.
+     * HLS has its own speed control in ExoPlayer (see the live configuration).
+     */
+    private val catchUp = object : Runnable {
+        override fun run() {
+            val p = player ?: return
+            if (StreamUrl.isRtsp(currentUrl) && p.playbackState == Player.STATE_READY) {
+                val ahead = p.bufferedPosition - p.currentPosition
+                val speed = p.playbackParameters.speed
+                val target = when {
+                    ahead > CATCHUP_START_MS -> CATCHUP_SPEED
+                    ahead < CATCHUP_STOP_MS -> 1f
+                    else -> speed
+                }
+                if (target != speed) p.setPlaybackSpeed(target)
+            }
+            if (statsVisible) updateStats(p)
+            handler.postDelayed(this, CATCHUP_INTERVAL_MS)
+        }
+    }
+
+    private fun updateStats(p: ExoPlayer) {
+        val mode = if (StreamUrl.isRtsp(currentUrl)) "RTSP" else "HLS"
+        val ahead = (p.bufferedPosition - p.currentPosition).coerceAtLeast(0)
+        val size = p.videoSize.let { if (it.width > 0) "${it.width}x${it.height}" else "-" }
+        val codec = p.videoFormat?.sampleMimeType?.substringAfter('/') ?: "-"
+        val live = if (StreamUrl.isRtsp(currentUrl)) {
+            if (playStartWallMs >= 0) {
+                val lost = (SystemClock.elapsedRealtime() - playStartWallMs) - (p.currentPosition - playStartPositionMs)
+                "lost since start: ${lost} ms"
+            } else "-"
+        } else {
+            val off = p.currentLiveOffset
+            if (off != C.TIME_UNSET) "live offset: ${off} ms" else "-"
+        }
+        statsText.text = "$mode  $codec  $size\nbuffer: ${ahead} ms   speed: ${"%.2f".format(p.playbackParameters.speed)}x\n$live"
     }
 
     private fun buildMediaSource(url: String): MediaSource {
@@ -388,6 +432,13 @@ class PlayerActivity : Activity() {
                 openSettings()
                 return true
             }
+            KeyEvent.KEYCODE_DPAD_UP,
+            KeyEvent.KEYCODE_INFO -> {
+                statsVisible = !statsVisible
+                statsText.visibility = if (statsVisible) View.VISIBLE else View.GONE
+                player?.let { updateStats(it) }
+                return true
+            }
             KeyEvent.KEYCODE_BACK -> {
                 val now = SystemClock.elapsedRealtime()
                 if (now - lastBackPressAt < BACK_EXIT_WINDOW_MS) {
@@ -432,6 +483,10 @@ class PlayerActivity : Activity() {
         private const val MAX_DRIFT_MS = 3000L
         private const val MAX_HLS_LIVE_OFFSET_MS = 8000L
         private const val HLS_TARGET_OFFSET_MS = 1000L
+        private const val CATCHUP_INTERVAL_MS = 500L
+        private const val CATCHUP_START_MS = 450L
+        private const val CATCHUP_STOP_MS = 250L
+        private const val CATCHUP_SPEED = 1.1f
         private const val HLS_MIN_OFFSET_MS = 500L
         private const val HLS_MIN_SPEED = 0.97f
         private const val HLS_MAX_SPEED = 1.08f

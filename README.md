@@ -158,12 +158,15 @@ screen after switching the TV on. Alternatively, grant the permission once from 
 - It opens full screen and plays the program feed. There are no menus on screen.
 - **OK** or **☰ Menu** on the remote opens settings: program PC address and
   auto-start options. Typing only the IP (e.g. `192.168.1.50`) is enough.
+- **Up** on the remote shows/hides stats (RTSP or HLS, resolution, buffer, speed).
 - **Back twice** exits.
 - The app first tries RTSP (port 8554, under 1 s delay). If that fails twice on a
   TV, it switches by itself to HLS (port 8888, about 1–2 s delay) and remembers
   that for next time. Both come from the same relay; nothing to set up.
 - If the feed stops (OBS stopped, PC restarted, cable unplugged), the screen says
   *Waiting for the program feed* and reconnects by itself as soon as the feed is back.
+- On RTSP, if delay builds up in the buffer after a network hiccup, the app plays
+  10% faster for a moment to get back to live.
 - If the picture freezes, or falls more than 3 seconds behind live after a
   network hiccup, the app reconnects to get back to live.
 - When the TV is switched on (from standby or after a power cut), the app opens

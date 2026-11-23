@@ -5,7 +5,7 @@
     <string name="status_connecting">Connecting to the program feed…\n%1$s</string>
     <string name="status_reconnecting">Waiting for the program feed…\n%1$s\n\n%2$s\n\nTrying again in %3$d s</string>
     <string name="status_no_url">No stream address is set yet.</string>
-    <string name="hint_settings">Press OK or ☰ Menu on the remote for settings</string>
+    <string name="hint_settings">Press OK or ☰ Menu on the remote for settings, Up for stats</string>
     <string name="reason_ended">stream stopped</string>
     <string name="reason_stalled">picture frozen</string>
     <string name="reason_bad_url">address not valid</string>
