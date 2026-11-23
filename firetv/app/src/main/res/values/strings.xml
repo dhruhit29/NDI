@@ -22,7 +22,9 @@
     <string name="error_empty_url">Enter the program PC\'s IP address</string>
     <string name="info_text">This TV\'s IP address: %1$s\nApp version: %2$s\nAuto-open permission: %3$s</string>
     <string name="perm_granted">granted</string>
-    <string name="perm_missing">NOT granted. Run install-on-firetv.bat from the PC (see the setup guide)</string>
+    <string name="perm_missing">NOT granted. Press \"Allow auto-open\" above</string>
+    <string name="allow_auto_open">Allow auto-open</string>
+    <string name="no_permission_screen">This TV has no screen for this permission. The app works, but you must open it yourself after switching the TV on (or grant it once from a PC, see the guide).</string>
     <string name="perm_not_needed">not needed on this TV</string>
     <string name="unknown">unknown</string>
 

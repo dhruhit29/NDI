@@ -95,63 +95,60 @@ your PC's IP). To check it from any PC on the network, open that address in VLC
 
 ---
 
-## Step 2: Get the app (MandirTV.apk)
+## Step 2: Install the app on each Hisense Fire TV (no PC needed)
 
-GitHub builds the app automatically each time the code changes:
+Everything is done on the TV with the remote.
 
-1. In this repository on GitHub, open the **Actions** tab, then **Build Fire TV app**.
-2. Click the newest successful (green) run.
-3. Under **Artifacts**, download **MandirTV-apk** and unzip it. You get `MandirTV.apk`.
-
----
-
-## Step 3: Install the app on each Hisense Fire TV
-
-### On the TV (once per TV)
-1. Plug in a network cable (wired is much more reliable than Wi-Fi).
-2. Turn on developer options: **Settings → My Fire TV** (on some TVs: *Device &
-   Software*) **→ About**, then press **OK** on the TV / device name **7 times**
-   until it says you are a developer.
-3. Go back: **My Fire TV → Developer options → ADB debugging → ON**.
-4. Note the TV's IP address: **My Fire TV → About → Network**.
-5. Recommended for a display TV:
+1. **Plug in a network cable** (wired is much more reliable than Wi-Fi).
+2. **Install "Downloader":** on the Fire TV home screen, open **Find / Search**,
+   type `Downloader`, and install the orange **Downloader** app (by AFTVnews).
+   It's free.
+3. **Allow Downloader to install apps:**
+   1. Go to **Settings → My Fire TV** (on some TVs: *Device & Software*) **→ About**.
+   2. Press **OK** on the TV / device name **7 times** until it says you are a developer.
+   3. Go back to **My Fire TV → Developer options → Install unknown apps**
+      (or *Apps from Unknown Sources*) and set **Downloader** to **ON**.
+4. **Open Downloader.** In the address box, type:
+   ```
+   github.com/dhruhit29/NDI/releases/latest/download/MandirTV.apk
+   ```
+   and press **Go**. It downloads the app and shows an **Install** button.
+   Press **Install**, then **Open**. (Afterwards Downloader asks to delete the
+   file; choose **Delete**, as it is no longer needed.)
+5. **In Mandir TV**, type the program PC's IP address (for example
+   `192.168.1.50`) and choose **Save and play**.
+6. If the settings screen shows an **Allow auto-open** button, press it and
+   switch **Mandir TV** to **ON**. The app can then open itself when the TV is
+   switched on. If the TV says it has no screen for this, see
+   *Auto-open on newer TVs* below.
+7. Recommended for a display TV:
    - **Settings → Display & Sounds → Screensaver → Start time: Never**
    - **Settings → Display & Sounds → Power → Sleep / Auto standby: Off / Never**
      (the names differ a little between Hisense models)
 
-### From any Windows PC on the same network
-1. Download Google's **SDK Platform-Tools for Windows** (contains `adb.exe`):
-   https://developer.android.com/tools/releases/platform-tools
-2. Put these together in one folder:
-   ```
-   install-on-firetv.bat      (from this repo's windows folder)
-   MandirTV.apk               (from step 2)
-   platform-tools\adb.exe     (unzipped Platform-Tools)
-   ```
-3. Open a Command Prompt in that folder and run, using your TV's IP and the
-   program PC's IP:
-   ```
-   install-on-firetv.bat 192.168.1.101 192.168.1.50
-   ```
-4. The first time, the TV asks **"Allow USB debugging?"**. Tick *Always allow*
-   and press **OK**, then press a key in the Command Prompt.
+Repeat for each TV. **To update** the app later, do step 4 again; your
+settings are kept.
 
-The script installs the app, sets the program PC address, gives the app
-permission to open itself when the TV turns on, and starts it.
-Repeat for each TV. To **update** the app later, run the same command with the
-new APK.
+### Auto-open on newer TVs
+TVs on older Fire TV software (Fire OS 7) open the app by themselves after
+switch-on with no extra steps. Some newer ones (Fire OS 8) hide the permission
+for this. On those TVs the app still works, but you open it from the home
+screen after switching the TV on. Alternatively, grant the permission once from any Windows PC:
 
 <details>
-<summary>No PC available? Install with the Downloader app instead</summary>
+<summary>Grant auto-open from a Windows PC (optional)</summary>
 
-1. On the TV, install **Downloader** (by AFTVnews) from the Amazon app store.
-2. **Settings → My Fire TV → Developer options → Install unknown apps → Downloader: ON**.
-3. Put `MandirTV.apk` somewhere the TV can download it (for example a shared
-   web folder on a local PC) and enter that link in Downloader.
-4. Open **Mandir TV** and type the program PC's IP address.
-
-Without the PC script, the app cannot re-open itself when the TV wakes from
-standby on newer Fire TV software. Run the script from a PC once later to fix that.
+1. On the TV: **My Fire TV → Developer options → ADB debugging → ON**, and
+   note the TV's IP (**My Fire TV → About → Network**).
+2. On the PC, download Google's **SDK Platform-Tools for Windows**
+   (https://developer.android.com/tools/releases/platform-tools) and also
+   `MandirTV.apk` (same link as in step 4, opened in a browser).
+3. Put `install-on-firetv.bat` (from this repo's `windows` folder),
+   `MandirTV.apk` and the `platform-tools` folder together, then run:
+   ```
+   install-on-firetv.bat <TV-IP> <PROGRAM-PC-IP>
+   ```
+4. When the TV asks **"Allow USB debugging?"**, tick *Always allow* and press **OK**.
 </details>
 
 ---
@@ -192,7 +189,8 @@ If a TV already has a PC attached, use `windows/play-on-windows-tv.bat`:
 | Works in VLC but not on the TV | Make sure the TV is on the network (Settings shows its IP), and that a firewall or VLAN rule between the TV and the program PC allows TCP 8554. |
 | Picture stutters at 4K | Switch OBS to 1080p30 at 7000 Kbps, or lower the 4K bitrate to 15000. Use a cable, not Wi-Fi. |
 | No picture but sound | Your TV may not support H.265. In OBS, pick the H.264 encoder (NVENC H.264 / QuickSync H.264) instead. |
-| App doesn't open when the TV is switched on | Open the app's settings and check "Auto-open permission". If it says *NOT granted*, run `install-on-firetv.bat` for that TV again. |
+| App doesn't open when the TV is switched on | Open the app's settings and check "Auto-open permission". If it says *NOT granted*, press **Allow auto-open**, or use the PC method under *Auto-open on newer TVs*. |
+| Downloader says "404" / can't download | The GitHub repository must be **public** for the link to work (GitHub → Settings → General → Danger Zone → Change visibility). Check the address for typos. |
 | Delay too big | Check OBS: keyframe interval 1 s, B-frames 0, Low-latency tuning. |
 
 ---
@@ -212,6 +210,8 @@ If a TV already has a PC attached, use `windows/play-on-windows-tv.bat`:
   MPEG-TS over UDP (`udp://239.x.x.x:port`) addresses.
 - Set the address from a PC:
   `adb shell am start -n org.mandir.tvreceiver/.PlayerActivity -e url rtsp://IP:8554/program`
+- GitHub Actions builds the APK on every change and publishes it as the latest
+  release, which is what the Downloader link points to.
 - The APK is signed with `firetv/app/mandirtv.keystore`, which is kept in the
   repo so updates install over older versions. It is only meant for sideloading
   onto the mandir's own TVs.

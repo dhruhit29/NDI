@@ -39,8 +39,14 @@ jobs:
           name: MandirTV-apk
           path: out/MandirTV.apk
 
-      - name: Attach APK to release (tags only)
-        if: startsWith(github.ref, 'refs/tags/v')
+      # Every build is published as the "latest" release, so this link always
+      # gives the newest app (used by the Downloader app on the TVs):
+      # https://github.com/<owner>/<repo>/releases/latest/download/MandirTV.apk
+      - name: Publish as latest release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || format('build-{0}', github.run_number) }}
+          name: Mandir TV build ${{ github.run_number }}
+          target_commitish: ${{ github.sha }}
+          make_latest: true
           files: out/MandirTV.apk
