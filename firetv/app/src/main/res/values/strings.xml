@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Mandir TV</string>
+
+    <string name="status_connecting">Connecting to the program feed…\n%1$s</string>
+    <string name="status_reconnecting">Waiting for the program feed (%1$s).\nTrying again in %2$d s…</string>
+    <string name="status_no_url">No stream address is set yet.</string>
+    <string name="hint_settings">Press OK or ☰ Menu on the remote for settings</string>
+    <string name="reason_ended">stream stopped</string>
+    <string name="reason_stalled">picture frozen</string>
+    <string name="reason_bad_url">address not valid</string>
+    <string name="press_back_again">Press Back again to exit</string>
+
+    <string name="settings_title">Mandir TV settings</string>
+    <string name="url_label">Program PC address</string>
+    <string name="url_hint">e.g. 192.168.1.50</string>
+    <string name="url_help">Type only the program PC\'s IP address and the rest is filled in (rtsp://IP:8554/program). A full address also works.</string>
+    <string name="start_on_boot">Open automatically when the TV starts</string>
+    <string name="reopen_on_wake">Open automatically when the TV is switched on from standby</string>
+    <string name="save">Save and play</string>
+    <string name="cancel">Cancel</string>
+    <string name="error_empty_url">Enter the program PC\'s IP address</string>
+    <string name="info_text">This TV\'s IP address: %1$s\nApp version: %2$s\nAuto-open permission: %3$s</string>
+    <string name="perm_granted">granted</string>
+    <string name="perm_missing">NOT granted. Run install-on-firetv.bat from the PC (see the setup guide)</string>
+    <string name="perm_not_needed">not needed on this TV</string>
+    <string name="unknown">unknown</string>
+
+    <string name="notification_channel">Background</string>
+    <string name="notification_text">Re-opens the program feed when the TV is switched on</string>
+</resources>
