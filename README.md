@@ -159,6 +159,9 @@ screen after switching the TV on. Alternatively, grant the permission once from 
 - **OK** or **☰ Menu** on the remote opens settings: program PC address and
   auto-start options. Typing only the IP (e.g. `192.168.1.50`) is enough.
 - **Back twice** exits.
+- The app first tries RTSP (port 8554, under 1 s delay). If that fails twice on a
+  TV, it switches by itself to HLS (port 8888, about 1–2 s delay) and remembers
+  that for next time. Both come from the same relay; nothing to set up.
 - If the feed stops (OBS stopped, PC restarted, cable unplugged), the screen says
   *Waiting for the program feed* and reconnects by itself as soon as the feed is back.
 - If the picture freezes, or falls more than 3 seconds behind live after a
@@ -185,8 +188,8 @@ If a TV already has a PC attached, use `windows/play-on-windows-tv.bat`:
 
 | What you see | What to check |
 |---|---|
-| "Waiting for the program feed (...)" forever | Is OBS streaming and is `start-relay.bat` running? Can a PC play `rtsp://<pc-ip>:8554/program` in VLC? Did you run `allow-firewall.bat`? Is the address in the app's settings correct? |
-| Works in VLC but not on the TV | Make sure the TV is on the network (Settings shows its IP), and that a firewall or VLAN rule between the TV and the program PC allows TCP 8554. |
+| "Waiting for the program feed (...)" forever | Is OBS streaming and is `start-relay.bat` running? Can a PC play `rtsp://<pc-ip>:8554/program` in VLC? Did you run `allow-firewall.bat` (it opens TCP 8554 and 8888)? Is the address in the app's settings correct? |
+| Works in VLC but not on the TV | Make sure the TV is on the network (Settings shows its IP), and that a firewall or VLAN rule between the TV and the program PC allows TCP 8554 and 8888. |
 | Picture stutters at 4K | Switch OBS to 1080p30 at 7000 Kbps, or lower the 4K bitrate to 15000. Use a cable, not Wi-Fi. |
 | No picture but sound | Your TV may not support H.265. In OBS, pick the H.264 encoder (NVENC H.264 / QuickSync H.264) instead. |
 | App doesn't open when the TV is switched on | Open the app's settings and check "Auto-open permission". If it says *NOT granted*, press **Allow auto-open**, or use the PC method under *Auto-open on newer TVs*. |
