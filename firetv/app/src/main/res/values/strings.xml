@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Mandir TV</string>
+    <string name="app_name">HPCC TV</string>
 
     <string name="status_connecting">Connecting to the program feed…\n%1$s</string>
     <string name="status_reconnecting">Waiting for the program feed…\n%1$s\n\n%2$s\n\nTrying again in %3$d s</string>
@@ -11,7 +11,7 @@
     <string name="reason_bad_url">address not valid</string>
     <string name="press_back_again">Press Back again to exit</string>
 
-    <string name="settings_title">Mandir TV settings</string>
+    <string name="settings_title">HPCC TV settings</string>
     <string name="url_label">Program PC address</string>
     <string name="url_hint">e.g. 192.168.1.50</string>
     <string name="url_help">Type only the program PC\'s IP address and the rest is filled in (rtsp://IP:8554/program). A full address also works.</string>

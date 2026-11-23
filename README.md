@@ -1,4 +1,4 @@
-# Mandir TV: program feed to every TV, with no PC behind the TVs
+# HPCC TV: program feed to every TV, with no PC behind the TVs
 
 One PC captures the program out and sends it over the fiber network. Each
 Hisense TV with **Fire TV built in** runs a small app that plays it full screen.
@@ -12,7 +12,7 @@ The TVs need no extra PCs or decoder boxes.
              ┌────────────┬────────────┬────────────┐
              ▼            ▼            ▼            ▼
         Hisense TV   Hisense TV   Hisense TV   PC + TV (optional)
-        "Mandir TV"  "Mandir TV"  "Mandir TV"  mpv player
+         "HPCC TV"    "HPCC TV"    "HPCC TV"   mpv player
           app          app          app
 ```
 
@@ -37,7 +37,7 @@ Start with 4K30. If any TV struggles, switch to 1080p30 (one setting in OBS).
 
 | Folder | What it is |
 |---|---|
-| `firetv/` | The **Mandir TV** Android app for Fire TV (source code) |
+| `firetv/` | The **HPCC TV** Android app for Fire TV (source code) |
 | `sender/` | Scripts for the program PC (relay, firewall) |
 | `windows/` | `install-on-firetv.bat` installs the app on a TV from a PC; `play-on-windows-tv.bat` is a player for a TV driven by a Windows PC |
 
@@ -115,10 +115,10 @@ Everything is done on the TV with the remote.
    and press **Go**. It downloads the app and shows an **Install** button.
    Press **Install**, then **Open**. (Afterwards Downloader asks to delete the
    file; choose **Delete**, as it is no longer needed.)
-5. **In Mandir TV**, type the program PC's IP address (for example
+5. **In HPCC TV**, type the program PC's IP address (for example
    `192.168.1.50`) and choose **Save and play**.
 6. If the settings screen shows an **Allow auto-open** button, press it and
-   switch **Mandir TV** to **ON**. The app can then open itself when the TV is
+   switch **HPCC TV** to **ON**. The app can then open itself when the TV is
    switched on. If the TV says it has no screen for this, see
    *Auto-open on newer TVs* below.
 7. Recommended for a display TV:

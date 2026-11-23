@@ -1,6 +1,6 @@
 @echo off
 rem ------------------------------------------------------------------
-rem  Mandir TV - player for a TV that is connected to a Windows PC.
+rem  HPCC TV - player for a TV that is connected to a Windows PC.
 rem
 rem  Usage:  play-on-windows-tv.bat 192.168.1.50
 rem          (the IP address of the program PC)
@@ -18,7 +18,7 @@ echo %URL% | find "://" >nul || set "URL=rtsp://%PC%:8554/program"
 set "MPV=%~dp0mpv\mpv.exe"
 if not exist "%MPV%" set "MPV=mpv"
 
-title Mandir TV player - %URL%
+title HPCC TV player - %URL%
 :loop
 "%MPV%" "%URL%" --profile=low-latency --rtsp-transport=tcp --hwdec=auto-safe --fullscreen --no-osc --osd-level=0 --cursor-autohide=always --force-window=immediate --network-timeout=8 --keep-open=no
 echo.

@@ -1,6 +1,6 @@
 @echo off
 rem ------------------------------------------------------------------
-rem  Mandir TV - install / update the app on one Fire TV from a Windows PC.
+rem  HPCC TV - install / update the app on one Fire TV from a Windows PC.
 rem
 rem  Usage:  install-on-firetv.bat <TV-IP> <PROGRAM-PC-IP>
 rem  Example: install-on-firetv.bat 192.168.1.101 192.168.1.50
