@@ -21,6 +21,7 @@ import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.analytics.AnalyticsListener
 import androidx.media3.exoplayer.rtsp.RtspMediaSource
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.source.MediaSource
@@ -57,6 +58,8 @@ class PlayerActivity : Activity() {
     private var reachedReady = false
     private var currentUrl = ""
     private var rtspProxy: RtspSdpFixProxy? = null
+    private var audioUnderruns = 0
+    private var droppedFrames = 0
 
     // Freeze / delay detection.
     private var lastPositionMs = -1L
@@ -160,6 +163,23 @@ class PlayerActivity : Activity() {
             .setLoadControl(loadControl)
             .build()
         newPlayer.addListener(listener)
+        audioUnderruns = 0
+        droppedFrames = 0
+        newPlayer.addAnalyticsListener(object : AnalyticsListener {
+            override fun onAudioUnderrun(
+                eventTime: AnalyticsListener.EventTime,
+                bufferSize: Int,
+                bufferSizeMs: Long,
+                elapsedSinceLastFeedMs: Long,
+            ) {
+                audioUnderruns++
+                Log.w(TAG, "Audio underrun #$audioUnderruns")
+            }
+
+            override fun onDroppedVideoFrames(eventTime: AnalyticsListener.EventTime, count: Int, elapsedMs: Long) {
+                droppedFrames += count
+            }
+        })
         try {
             newPlayer.setMediaSource(buildMediaSource(url))
         } catch (e: Exception) {
@@ -217,7 +237,7 @@ class PlayerActivity : Activity() {
             val off = p.currentLiveOffset
             if (off != C.TIME_UNSET) "live offset: ${off} ms" else "-"
         }
-        statsText.text = "$mode  $codec  $size\nbuffer: ${ahead} ms   speed: ${"%.2f".format(p.playbackParameters.speed)}x\n$live"
+        statsText.text = "$mode  $codec  $size\nbuffer: ${ahead} ms   speed: ${"%.2f".format(p.playbackParameters.speed)}x\n$live\naudio gaps: $audioUnderruns   dropped frames: $droppedFrames"
     }
 
     private fun buildMediaSource(url: String): MediaSource {
@@ -475,8 +495,10 @@ class PlayerActivity : Activity() {
 
         private const val MIN_BUFFER_MS = 1000
         private const val MAX_BUFFER_MS = 3000
-        private const val START_BUFFER_MS = 250
-        private const val REBUFFER_MS = 500
+        // ~0.5 s of cushion: small enough to stay near live, big enough that normal network
+        // wobble never runs the audio dry (an empty buffer is heard as a short gap).
+        private const val START_BUFFER_MS = 500
+        private const val REBUFFER_MS = 1000
         private const val FAILURES_BEFORE_SWITCH = 2
         private const val DEFAULT_RTSP_PORT = 554
         private const val MAX_ERROR_CHARS = 400
@@ -490,9 +512,10 @@ class PlayerActivity : Activity() {
         private const val MAX_HLS_LIVE_OFFSET_MS = 8000L
         private const val HLS_TARGET_OFFSET_MS = 1000L
         private const val CATCHUP_INTERVAL_MS = 500L
-        private const val CATCHUP_START_MS = 350L
-        private const val CATCHUP_STOP_MS = 150L
-        private const val CATCHUP_SPEED = 1.1f
+        // Only after a real hiccup, and gently: speed changes are audible in music.
+        private const val CATCHUP_START_MS = 2000L
+        private const val CATCHUP_STOP_MS = 700L
+        private const val CATCHUP_SPEED = 1.03f
         private const val HLS_MIN_OFFSET_MS = 500L
         private const val HLS_MIN_SPEED = 0.97f
         private const val HLS_MAX_SPEED = 1.08f
