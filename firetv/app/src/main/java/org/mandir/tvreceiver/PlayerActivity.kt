@@ -13,6 +13,7 @@ import android.view.WindowManager
 import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.OptIn
+import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
@@ -184,6 +185,8 @@ class PlayerActivity : Activity() {
                     retryDelayMs = RETRY_MIN_MS
                     reachedReady = true
                     failuresInCurrentMode = 0
+                    // Remember what works on this TV so the next start is instant.
+                    if (StreamUrl.hlsFallbackFor(prefs.streamUrl) != null) prefs.preferHls = useHlsFallback
                     Log.i(TAG, "Playing $currentUrl")
                 }
                 Player.STATE_ENDED -> scheduleReconnect(getString(R.string.reason_ended))
@@ -223,17 +226,37 @@ class PlayerActivity : Activity() {
                 scheduleReconnect(getString(R.string.reason_stalled))
                 return
             }
-            if (playStartWallMs >= 0) {
-                val drift = (now - playStartWallMs) - (position - playStartPositionMs)
-                if (drift > MAX_DRIFT_MS) {
-                    Log.i(TAG, "Fell ${drift}ms behind live, reconnecting")
-                    retryDelayMs = RETRY_MIN_MS
-                    startPlayback()
-                    return
-                }
+            if (isBehindLive(p, now)) {
+                retryDelayMs = RETRY_MIN_MS
+                startPlayback()
+                return
             }
             handler.postDelayed(this, WATCHDOG_INTERVAL_MS)
         }
+    }
+
+    /**
+     * RTSP: the position counts up steadily from the start, so compare it with the wall clock.
+     * HLS: the position is relative to a sliding window and jumps back as old segments
+     * drop off, so use the player's own live offset instead (ExoPlayer also speeds up
+     * slightly to catch up on its own; this is only for big hiccups).
+     */
+    private fun isBehindLive(p: ExoPlayer, now: Long): Boolean {
+        if (StreamUrl.isRtsp(currentUrl)) {
+            if (playStartWallMs < 0) return false
+            val drift = (now - playStartWallMs) - (p.currentPosition - playStartPositionMs)
+            if (drift > MAX_DRIFT_MS) {
+                Log.i(TAG, "RTSP fell ${drift}ms behind live, reconnecting")
+                return true
+            }
+            return false
+        }
+        val offset = p.currentLiveOffset
+        if (offset != C.TIME_UNSET && offset > MAX_HLS_LIVE_OFFSET_MS) {
+            Log.i(TAG, "HLS is ${offset}ms behind live, reconnecting")
+            return true
+        }
+        return false
     }
 
     private fun scheduleReconnect(reason: String) {
@@ -258,7 +281,7 @@ class PlayerActivity : Activity() {
 
     private fun resetMode() {
         retryDelayMs = RETRY_MIN_MS
-        useHlsFallback = false
+        useHlsFallback = prefs.preferHls && StreamUrl.hlsFallbackFor(prefs.streamUrl) != null
         failuresInCurrentMode = 0
     }
 
@@ -349,6 +372,7 @@ class PlayerActivity : Activity() {
         private const val WATCHDOG_INTERVAL_MS = 2000L
         private const val STALL_TIMEOUT_MS = 15000L
         private const val MAX_DRIFT_MS = 3000L
+        private const val MAX_HLS_LIVE_OFFSET_MS = 8000L
         private const val BACK_EXIT_WINDOW_MS = 2500L
     }
 }

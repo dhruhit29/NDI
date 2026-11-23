@@ -18,9 +18,17 @@ class Prefs(context: Context) {
         get() = sp.getBoolean(KEY_WAKE, true)
         set(value) = sp.edit().putBoolean(KEY_WAKE, value).apply()
 
+    /** Set automatically when HLS worked and RTSP did not on this TV. */
+    var preferHls: Boolean
+        get() = sp.getBoolean(KEY_PREFER_HLS, false)
+        set(value) {
+            if (value != preferHls) sp.edit().putBoolean(KEY_PREFER_HLS, value).apply()
+        }
+
     private companion object {
         const val KEY_URL = "stream_url"
         const val KEY_BOOT = "start_on_boot"
         const val KEY_WAKE = "reopen_on_wake"
+        const val KEY_PREFER_HLS = "prefer_hls"
     }
 }
