@@ -218,6 +218,7 @@ class PlayerActivity : Activity() {
                     // Remember what works on this TV so the next start is instant.
                     if (StreamUrl.hlsFallbackFor(prefs.streamUrl) != null) prefs.preferHls = useHlsFallback
                     prefs.lastMode = if (StreamUrl.isRtsp(currentUrl)) "RTSP" else "HLS"
+                    if (StreamUrl.isRtsp(currentUrl)) prefs.lastRtspError = ""
                     Log.i(TAG, "Playing $currentUrl")
                 }
                 Player.STATE_ENDED -> scheduleReconnect(getString(R.string.reason_ended))
