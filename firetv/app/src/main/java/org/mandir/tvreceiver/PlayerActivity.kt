@@ -163,7 +163,23 @@ class PlayerActivity : Activity() {
     }
 
     private fun buildMediaSource(url: String): MediaSource {
-        val item = MediaItem.fromUri(url)
+        val item = if (StreamUrl.isRtsp(url)) {
+            MediaItem.fromUri(url)
+        } else {
+            // Stay close to live on HLS. The relay suggests a safer (larger) offset;
+            // if this TV rebuffers, ExoPlayer raises the target a little on its own.
+            MediaItem.Builder()
+                .setUri(url)
+                .setLiveConfiguration(
+                    MediaItem.LiveConfiguration.Builder()
+                        .setTargetOffsetMs(HLS_TARGET_OFFSET_MS)
+                        .setMinOffsetMs(HLS_MIN_OFFSET_MS)
+                        .setMinPlaybackSpeed(HLS_MIN_SPEED)
+                        .setMaxPlaybackSpeed(HLS_MAX_SPEED)
+                        .build()
+                )
+                .build()
+        }
         return if (StreamUrl.isRtsp(url)) {
             RtspMediaSource.Factory()
                 // RTP over the RTSP TCP connection: no lost packets / smearing,
@@ -187,6 +203,7 @@ class PlayerActivity : Activity() {
                     failuresInCurrentMode = 0
                     // Remember what works on this TV so the next start is instant.
                     if (StreamUrl.hlsFallbackFor(prefs.streamUrl) != null) prefs.preferHls = useHlsFallback
+                    prefs.lastMode = if (StreamUrl.isRtsp(currentUrl)) "RTSP" else "HLS"
                     Log.i(TAG, "Playing $currentUrl")
                 }
                 Player.STATE_ENDED -> scheduleReconnect(getString(R.string.reason_ended))
@@ -203,7 +220,9 @@ class PlayerActivity : Activity() {
 
         override fun onPlayerError(error: PlaybackException) {
             Log.w(TAG, "Playback error on $currentUrl", error)
-            scheduleReconnect(describe(error))
+            val reason = describe(error)
+            if (StreamUrl.isRtsp(currentUrl)) prefs.lastRtspError = reason
+            scheduleReconnect(reason)
         }
     }
 
@@ -373,6 +392,10 @@ class PlayerActivity : Activity() {
         private const val STALL_TIMEOUT_MS = 15000L
         private const val MAX_DRIFT_MS = 3000L
         private const val MAX_HLS_LIVE_OFFSET_MS = 8000L
+        private const val HLS_TARGET_OFFSET_MS = 1000L
+        private const val HLS_MIN_OFFSET_MS = 500L
+        private const val HLS_MIN_SPEED = 0.97f
+        private const val HLS_MAX_SPEED = 1.08f
         private const val BACK_EXIT_WINDOW_MS = 2500L
     }
 }

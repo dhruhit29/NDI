@@ -25,10 +25,24 @@ class Prefs(context: Context) {
             if (value != preferHls) sp.edit().putBoolean(KEY_PREFER_HLS, value).apply()
         }
 
+    /** "RTSP" or "HLS": what the feed last played over. Shown in settings. */
+    var lastMode: String
+        get() = sp.getString(KEY_LAST_MODE, "") ?: ""
+        set(value) {
+            if (value != lastMode) sp.edit().putString(KEY_LAST_MODE, value).apply()
+        }
+
+    /** Last reason RTSP failed, shown in settings to help diagnose. */
+    var lastRtspError: String
+        get() = sp.getString(KEY_LAST_RTSP_ERROR, "") ?: ""
+        set(value) = sp.edit().putString(KEY_LAST_RTSP_ERROR, value).apply()
+
     private companion object {
         const val KEY_URL = "stream_url"
         const val KEY_BOOT = "start_on_boot"
         const val KEY_WAKE = "reopen_on_wake"
         const val KEY_PREFER_HLS = "prefer_hls"
+        const val KEY_LAST_MODE = "last_mode"
+        const val KEY_LAST_RTSP_ERROR = "last_rtsp_error"
     }
 }

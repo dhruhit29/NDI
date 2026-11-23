@@ -62,6 +62,8 @@ class SettingsActivity : Activity() {
             localIpv4Addresses(),
             versionName(),
             permissionStatus(),
+            prefs.lastMode.ifEmpty { getString(R.string.not_yet) },
+            prefs.lastRtspError.ifEmpty { getString(R.string.none) },
         )
     }
 
@@ -74,6 +76,8 @@ class SettingsActivity : Activity() {
         prefs.streamUrl = url
         prefs.startOnBoot = bootCheck.isChecked
         prefs.reopenOnWake = wakeCheck.isChecked
+        // Saving always gives RTSP (lowest delay) a fresh try; the app falls back to HLS again if needed.
+        prefs.preferHls = false
         KeepAliveService.sync(this)
         startActivity(
             Intent(this, PlayerActivity::class.java)

@@ -20,7 +20,9 @@
     <string name="save">Save and play</string>
     <string name="cancel">Cancel</string>
     <string name="error_empty_url">Enter the program PC\'s IP address</string>
-    <string name="info_text">This TV\'s IP address: %1$s\nApp version: %2$s\nAuto-open permission: %3$s</string>
+    <string name="info_text">Playing via: %4$s\nThis TV\'s IP address: %1$s\nApp version: %2$s\nAuto-open permission: %3$s\n\nLast RTSP error: %5$s</string>
+    <string name="not_yet">not played yet</string>
+    <string name="none">none</string>
     <string name="perm_granted">granted</string>
     <string name="perm_missing">NOT granted. Press \"Allow auto-open\" above</string>
     <string name="allow_auto_open">Allow auto-open</string>
